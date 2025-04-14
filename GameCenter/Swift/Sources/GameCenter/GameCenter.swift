@@ -85,6 +85,28 @@ class GameCenter: Object {
     /// @Signal
     /// Error showing the leaderboard
     @Signal var leaderboardFail: SignalWithArguments<Int, String>
+    
+    // MARK: Save & Load Game
+    /// @Signal
+    /// Returns the saved game list on a successful fetch
+    @Signal var fetchSavedGameListSuccess:
+        SignalWithArguments<ObjectCollection<GameCenterSavedGameMetadata>>
+    /// @Signal
+    /// Error saving the saved game list
+    @Signal var fetchSavedGameListFail: SignalWithArguments<Int, String>
+    /// @Signal
+    /// The game was successfully saved
+    @Signal var gameSaveSuccess: SimpleSignal
+    /// @Signal
+    /// Error saving the game
+    @Signal var gameSaveFail: SignalWithArguments<Int, String>
+    /// @Signal
+    /// Returns the saved game data as a string on a successful load
+    @Signal var gameLoadSuccess: SignalWithArguments<String>
+    /// @Signal
+    /// Error loading the game
+    @Signal var gameLoadFail: SignalWithArguments<Int, String>
+
 
     #if canImport(UIKit)
         var viewController: GameCenterViewController =
