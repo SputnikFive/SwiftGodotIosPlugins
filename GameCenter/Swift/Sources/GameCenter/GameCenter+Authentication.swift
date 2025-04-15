@@ -8,7 +8,7 @@
 import GameKit
 import SwiftGodot
 
-// MARK: Authentication
+// MARK: - Authentication
 
 extension GameCenter {
     

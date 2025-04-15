@@ -10,7 +10,7 @@ import SwiftGodot
 
 @Godot
 class GameCenterAchievementDescription: Object {
-    // MARK: Export
+    // MARK: - Export
     /// @Export
     /// Achievement identifier
     @Export var identifier: String = ""

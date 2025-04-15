@@ -10,7 +10,7 @@ import SwiftGodot
 
 @Godot
 class GameCenterPlayer: Object {
-    // MARK: Exports
+    // MARK: - Exports
     /// @Export
     ///
     /// The alias property contains the player's nickname. When you need to display the name to the user, consider using displayName instead. The nickname is unique but not invariant: the player may change their nickname. The nickname may be very long, so be sure to use appropriate string truncation API when drawing.

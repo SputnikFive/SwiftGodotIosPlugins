@@ -10,7 +10,7 @@ import SwiftGodot
 
 @Godot
 class GameCenterPlayerLocal: GameCenterPlayer {
-    // MARK: Exports
+    // MARK: - Exports
     /// @Export
     ///
     /// Indicates if a player is under age

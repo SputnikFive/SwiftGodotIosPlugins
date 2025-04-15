@@ -14,15 +14,26 @@ import SwiftGodot
 
 @Godot
 class GameCenterSavedGameMetadata: Object {
-    // MARK: Export
+    // MARK: - Export
     /// @Export
     /// The name of the saved game.
     @Export var name: String = ""
     /// @Export
     /// The date the game data was last saved or modified.
     /// The number of seconds passed since 1970-01-01 at 00:00:00 UTC.
-    @Export var modificationDate: Float = 0.0
+    @Export var modificationDate: Double = 0
     /// @Export
     /// The name of the device that the player used to save the game.
     @Export var deviceName: String = ""
+    
+    convenience init(_ savedGame: GKSavedGame) {
+        self.init()
+        self.name = savedGame.name ?? ""
+        #if canImport(Foundation)
+            if let modificationDate = savedGame.modificationDate {
+                self.modificationDate = modificationDate.timeIntervalSince1970
+        }
+        #endif
+        self.deviceName = savedGame.deviceName ?? ""
+    }
 }

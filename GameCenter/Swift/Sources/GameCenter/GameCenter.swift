@@ -35,7 +35,7 @@ enum GameCenterError: Int, Error {
 @Godot
 class GameCenter: Object {
 
-    // MARK: Authentication
+    // MARK: - Authentication signals
     /// @Signal
     /// Player is successfully authenticated on GameCenter
     @Signal var signinSuccess: SignalWithArguments<GameCenterPlayerLocal>
@@ -43,7 +43,7 @@ class GameCenter: Object {
     /// Error suring the signing process
     @Signal var signinFail: SignalWithArguments<Int, String>
 
-    // MARK: Achievements
+    // MARK: - Achievement signals
     /// @Signal
     /// Achievement(s) have been successfully reported
     @Signal var achievementsReportSuccess: SimpleSignal
@@ -70,6 +70,8 @@ class GameCenter: Object {
     /// @Signal
     /// Error reporting the achievements
     @Signal var achievementsDescriptionFail: SignalWithArguments<Int, String>
+    
+    // MARK: - Leaderboard signals
     /// @Signal
     /// Score(s) have been successfully reported
     @Signal var leaderboardScoreSuccess: SimpleSignal
@@ -86,13 +88,13 @@ class GameCenter: Object {
     /// Error showing the leaderboard
     @Signal var leaderboardFail: SignalWithArguments<Int, String>
     
-    // MARK: Save & Load Game
+    // MARK: - Save & load game signals
     /// @Signal
-    /// Returns the saved game list on a successful fetch
+    /// Returns the saved game metadata list on a successful fetch
     @Signal var fetchSavedGameListSuccess:
         SignalWithArguments<ObjectCollection<GameCenterSavedGameMetadata>>
     /// @Signal
-    /// Error saving the saved game list
+    /// Error loading the saved game list
     @Signal var fetchSavedGameListFail: SignalWithArguments<Int, String>
     /// @Signal
     /// The game was successfully saved
@@ -106,8 +108,13 @@ class GameCenter: Object {
     /// @Signal
     /// Error loading the game
     @Signal var gameLoadFail: SignalWithArguments<Int, String>
+    /// @Signal
+    /// Returns the conflicting saved game metadata list
+    @Signal var hasConflictingSavedGames:
+        SignalWithArguments<ObjectCollection<GameCenterSavedGameMetadata>>
 
 
+    // MARK: - Properties
     #if canImport(UIKit)
         var viewController: GameCenterViewController =
             GameCenterViewController()
@@ -115,18 +122,24 @@ class GameCenter: Object {
 
     static var shared: GameCenter?
     var player: GameCenterPlayerLocal?
+    var gameCenterLocalPlayerListener: GameCenterLocalPlayerListener?
+    var fetchedSavedGames = [GKSavedGame]()
+    var conflictingSavedGames = [GKSavedGame]()
 
+    // MARK: - Init
     required init() {
         super.init()
         GameCenter.shared = self
+        self.gameCenterLocalPlayerListener = GameCenterLocalPlayerListener()
     }
 
     required init(nativeHandle: UnsafeRawPointer) {
         super.init()
         GameCenter.shared = self
+        self.gameCenterLocalPlayerListener = GameCenterLocalPlayerListener()
     }
 
-    // MARK: Authentication
+    // MARK: - Authentication functions
     /// @Callable
     ///
     /// Authenticate with gameCenter.
@@ -148,7 +161,7 @@ class GameCenter: Object {
         return isAuthenticatedInternal()
     }
 
-    // MARK: Achievements
+    // MARK: - Achievement functions
     /// @Callable
     ///
     /// Report an array of achievements to the server. Percent complete is required. Points, completed state are set based on percentComplete. isHidden is set to NO anytime this method is invoked. Date is optional. Error will be nil on success.
@@ -229,7 +242,7 @@ class GameCenter: Object {
         showAchievementInternal(achievementID: achievementID)
     }
 
-    // MARK: Leaderboards
+    // MARK: - Leaderboard functions
     /// @Callable
     ///
     /// Instance method to submit a single score to the leaderboard associated with this instance
@@ -274,4 +287,44 @@ class GameCenter: Object {
     func showLeaderboard(leaderboardID: String) {
         showLeaderboardInternal(leaderboardID: leaderboardID)
     }
+    
+    // MARK: - Save & load game functions
+    /// @Callable
+    ///
+    /// Load all saved games for the local player.
+    ///
+    /// - Signals:
+    ///     - fetchSavedGameListSuccess: returns the saved game metadata list
+    ///     - fetchSavedGameListFail: returns an error code & message
+    @Callable
+    func fetchSavedGames() {
+        fetchSavedGamesInternal()
+    }
+    
+    /// @Callable
+    ///
+    /// Save the passed game for the local player.
+    ///
+    /// - Signals:
+    ///     - gameSaveSuccess: a signal with no parameters is raised
+    ///     - gameSaveFail: returns an error code & message
+    @Callable
+    func saveGame(saveGameName: String, saveGameDataString: String) {
+        saveGameInternal(
+            saveGameName: saveGameName,
+            saveGameDataString: saveGameDataString)
+    }
+
+    /// @Callable
+    ///
+    /// Load the saved game with the passed index for the local player.
+    ///
+    /// - Signals:
+    ///     - gameLoadSuccess: returns the saved game as a string
+    ///     - gameLoadFail: returns an error code & message
+    @Callable
+    func loadSavedGame(savedGameIndex: Int) {
+        loadSavedGameInternal(savedGameIndex: savedGameIndex)
+    }
+
 }
