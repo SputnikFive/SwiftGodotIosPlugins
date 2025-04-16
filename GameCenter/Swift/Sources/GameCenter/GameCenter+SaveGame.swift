@@ -19,9 +19,11 @@ extension GameCenter {
                 let localizedDescription = error.localizedDescription
                 let errorDetails = localizedDescription.isEmpty ? "" :
                     ": \(localizedDescription)"
-                self.fetchSavedGameListFail.emit(
-                    (error as NSError).code,
-                    "Error fetching saved games\(errorDetails)")
+                DispatchQueue.main.async {
+                    self.fetchSavedGameListFail.emit(
+                        (error as NSError).code,
+                        "Error fetching saved games\(errorDetails)")
+                }
             } else {
                 var savedGamesMetadata =
                     ObjectCollection<GameCenterSavedGameMetadata>()
@@ -34,7 +36,9 @@ extension GameCenter {
                 }
                 GD.printDebug(
                     "Loaded \(self.fetchedSavedGames.count) saved games")
-                self.fetchSavedGameListSuccess.emit(savedGamesMetadata)
+                DispatchQueue.main.async {
+                    self.fetchSavedGameListSuccess.emit(savedGamesMetadata)
+                }
             }
         })
     }
@@ -48,20 +52,23 @@ extension GameCenter {
             )
             return
         }
-        GKLocalPlayer.local.saveGameData(savedGameData,
-            withName: saveGameDataString, completionHandler: {
-                _, error in
-                if let error {
-                    let localizedDescription = error.localizedDescription
-                    let errorDetails = localizedDescription.isEmpty ? "" :
-                        ": \(localizedDescription)"
+        GKLocalPlayer.local.saveGameData(savedGameData, withName: saveGameDataString, completionHandler: {
+            _, error in
+            if let error {
+                let localizedDescription = error.localizedDescription
+                let errorDetails = localizedDescription.isEmpty ? "" :
+                ": \(localizedDescription)"
+                DispatchQueue.main.async {
                     self.gameSaveFail.emit(
                         (error as NSError).code,
                         "Error saving game\(errorDetails)")
-                } else {
-                    GD.printDebug("Saved game")
+                }
+            } else {
+                GD.printDebug("Saved game")
+                DispatchQueue.main.async {
                     self.gameSaveSuccess.emit()
                 }
+            }
         })
     }
     
@@ -82,70 +89,107 @@ extension GameCenter {
                 let localizedDescription = error.localizedDescription
                 let errorDetails = localizedDescription.isEmpty ? "" :
                     ": \(localizedDescription)"
-                self.gameLoadFail.emit(
-                    (error as NSError).code,
-                    "Error loading game\(errorDetails)")
+                DispatchQueue.main.async {
+                    self.gameLoadFail.emit(
+                        (error as NSError).code,
+                        "Error loading game\(errorDetails)")
+                }
             } else {
                 guard let gkSaveGameData else {
-                    self.gameLoadFail.emit(
-                        GameCenterError.unknownError.rawValue,
-                        "Error loading game: no save game data available"
-                    )
+                    DispatchQueue.main.async {
+                        self.gameLoadFail.emit(
+                            GameCenterError.unknownError.rawValue,
+                            "Error loading game: no save game data available"
+                        )
+                    }
                     return
                 }
                 guard let saveGameString = String(data: gkSaveGameData,
                     encoding: .utf8) else {
+                    DispatchQueue.main.async {
                         self.gameLoadFail.emit(
                             GameCenterError.unknownError.rawValue,
                             "Error loading game: game data decoding failed"
                         )
+                    }
                     return
                 }
                 GD.printDebug("Loaded saved game")
-                self.gameLoadSuccess.emit(saveGameString)
+                DispatchQueue.main.async {
+                    self.gameLoadSuccess.emit(saveGameString)
+                }
             }
         })
     }
     
-    func resolveConflictingSavedGamesInternal(savedGameIndex: Int) {
-        GD.printDebug("Resolving save game conflict: index=\(savedGameIndex)")
-        guard savedGameIndex >= 0 &&
-            savedGameIndex < self.conflictingSavedGames.count else {
-                self.gameLoadFail.emit(
+    func deleteGameInternal(saveGameName: String) {
+        GD.printDebug("Deleting game")
+        GKLocalPlayer.local.deleteSavedGames(withName: saveGameName, completionHandler: {
+            error in
+            if let error {
+                let localizedDescription = error.localizedDescription
+                let errorDetails = localizedDescription.isEmpty ? "" :
+                ": \(localizedDescription)"
+                DispatchQueue.main.async {
+                    self.gameDeleteFail.emit(
+                        (error as NSError).code,
+                        "Error deleting game\(errorDetails)")
+                }
+            } else {
+                GD.printDebug("Deleted game")
+                DispatchQueue.main.async {
+                    self.gameDeleteSuccess.emit()
+                }
+            }
+        })
+    }
+    
+    func resolveConflictingSavedGamesInternal(conflictingGameIndexes: [Int], saveGameDataString: String) {
+        GD.printDebug("Resolving save game conflict")
+        guard conflictingGameIndexes.count <= conflictingSavedGames.count else {
+            self.saveGameConflictResolveFail.emit(
+                GameCenterError.unknownError.rawValue,
+                "Error resolving conflict: too many indexes"
+            )
+            return
+        }
+        var conflictingGames = [GKSavedGame]()
+        for savedGameIndex in conflictingGameIndexes {
+            guard savedGameIndex >= 0 &&
+                savedGameIndex < self.conflictingSavedGames.count else {
+                self.saveGameConflictResolveFail.emit(
                     GameCenterError.unknownError.rawValue,
-                    "Error resolving game conflict: index out of range"
+                    "Error resolving conflict: index out of range"
                 )
                 return
+            }
+            conflictingGames.append(conflictingSavedGames[savedGameIndex])
         }
-        let savedGame = self.conflictingSavedGames[savedGameIndex]
-        savedGame.loadData(completionHandler: {
-            gkSaveGameData, error in
+        guard let savedGameData = saveGameDataString.data(using: .utf8) else {
+            self.saveGameConflictResolveFail.emit(
+                GameCenterError.unknownError.rawValue,
+                "Error resolving conflict: game data encoding failed"
+            )
+            return
+        }
+        GKLocalPlayer.local.resolveConflictingSavedGames(conflictingGames, with: savedGameData,completionHandler: {
+            _, error in
             if let error {
                 let localizedDescription = error.localizedDescription
                 let errorDetails = localizedDescription.isEmpty ? "" :
                     ": \(localizedDescription)"
-                self.gameLoadFail.emit(
-                    (error as NSError).code,
-                    "Error loading game\(errorDetails)")
+                DispatchQueue.main.async {
+                    self.saveGameConflictResolveFail.emit(
+                        (error as NSError).code,
+                        "Error resolving conflict\(errorDetails)")
+                }
             } else {
-                guard let gkSaveGameData else {
-                    self.gameLoadFail.emit(
-                        GameCenterError.unknownError.rawValue,
-                        "Error loading game: no save game data available"
-                    )
-                    return
+                GD.printDebug("Conflict resolved")
+                DispatchQueue.main.async {
+                    self.saveGameConflictResolveSuccess.emit()
                 }
-                guard let saveGameString = String(data: gkSaveGameData,
-                    encoding: .utf8) else {
-                        self.gameLoadFail.emit(
-                            GameCenterError.unknownError.rawValue,
-                            "Error loading game: game data decoding failed"
-                        )
-                    return
-                }
-                GD.printDebug("Loaded saved game")
-                self.gameLoadSuccess.emit(saveGameString)
             }
         })
     }
+    
 }

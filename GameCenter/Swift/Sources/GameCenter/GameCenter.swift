@@ -109,9 +109,21 @@ class GameCenter: Object {
     /// Error loading the game
     @Signal var gameLoadFail: SignalWithArguments<Int, String>
     /// @Signal
+    /// The game was successfully deleted
+    @Signal var gameDeleteSuccess: SimpleSignal
+    /// @Signal
+    /// Error deleting the game
+    @Signal var gameDeleteFail: SignalWithArguments<Int, String>
+    /// @Signal
     /// Returns the conflicting saved game metadata list
     @Signal var hasConflictingSavedGames:
         SignalWithArguments<ObjectCollection<GameCenterSavedGameMetadata>>
+    /// @Signal
+    /// The save game conflict was successfully resolved
+    @Signal var saveGameConflictResolveSuccess: SimpleSignal
+    /// @Signal
+    /// Error resolving the saved game conflict
+    @Signal var saveGameConflictResolveFail: SignalWithArguments<Int, String>
 
 
     // MARK: - Properties
@@ -291,7 +303,7 @@ class GameCenter: Object {
     // MARK: - Save & load game functions
     /// @Callable
     ///
-    /// Load all saved games for the local player.
+    /// Fetch all saved games.
     ///
     /// - Signals:
     ///     - fetchSavedGameListSuccess: returns the saved game metadata list
@@ -303,7 +315,7 @@ class GameCenter: Object {
     
     /// @Callable
     ///
-    /// Save the passed game for the local player.
+    /// Save the passed game.
     ///
     /// - Signals:
     ///     - gameSaveSuccess: a signal with no parameters is raised
@@ -317,7 +329,7 @@ class GameCenter: Object {
 
     /// @Callable
     ///
-    /// Load the saved game with the passed index for the local player.
+    /// Load the saved game with the passed index.
     ///
     /// - Signals:
     ///     - gameLoadSuccess: returns the saved game as a string
@@ -325,6 +337,43 @@ class GameCenter: Object {
     @Callable
     func loadSavedGame(savedGameIndex: Int) {
         loadSavedGameInternal(savedGameIndex: savedGameIndex)
+    }
+    
+    /// @Callable
+    ///
+    /// Delete the saved game(s) with the passed name.
+    ///
+    /// - Signals:
+    ///     - gameDeleteSuccess: a signal with no parameters is raised
+    ///     - gameDeleteFail: returns an error code & message
+    @Callable
+    func deleteGame(saveGameName: String) {
+        deleteGameInternal(saveGameName: saveGameName)
+    }
+
+    /// @Callable
+    ///
+    /// Resolve a saved game conflict.  Pass the conflicting game indexes,
+    /// and the correct save game data string.
+    ///
+    /// - Signals:
+    ///     - saveGameConflictResolveSuccess: a signal with no parameters is raised
+    ///     - saveGameConflictResolveFail: returns an error code & message
+    func resolveConflictingSavedGames(conflictingGameIndexesGArray: GArray,
+        saveGameDataString: String) {
+        var conflictingGameIndexes = [Int]()
+        for conflictingGameIndex in conflictingGameIndexesGArray {
+            guard let conflictingGameIndex = conflictingGameIndex as? Int else {
+                saveGameConflictResolveFail.emit(
+                    GameCenterError.unknownError.rawValue,
+                    "Error resolving conflict: non-int index")
+                return
+            }
+            conflictingGameIndexes.append(conflictingGameIndex)
+        }
+        resolveConflictingSavedGamesInternal(
+            conflictingGameIndexes: conflictingGameIndexes,
+            saveGameDataString: saveGameDataString)
     }
 
 }
