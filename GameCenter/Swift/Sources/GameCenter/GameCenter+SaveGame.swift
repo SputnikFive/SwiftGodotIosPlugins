@@ -52,7 +52,7 @@ extension GameCenter {
             )
             return
         }
-        GKLocalPlayer.local.saveGameData(savedGameData, withName: saveGameDataString, completionHandler: {
+        GKLocalPlayer.local.saveGameData(savedGameData, withName: saveGameName, completionHandler: {
             _, error in
             if let error {
                 let localizedDescription = error.localizedDescription
