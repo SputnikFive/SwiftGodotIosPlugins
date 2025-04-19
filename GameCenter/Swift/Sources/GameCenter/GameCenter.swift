@@ -20,6 +20,7 @@ import SwiftGodot
         GameCenterAchievementDescription.self,
         GameCenterPlayer.self,
         GameCenterPlayerLocal.self,
+        GameCenterSavedGameMetadata.self
     ]
 )
 
