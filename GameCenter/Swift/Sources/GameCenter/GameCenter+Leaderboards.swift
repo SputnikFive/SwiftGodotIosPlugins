@@ -76,4 +76,55 @@ extension GameCenter {
                 "Leaderboard not available")
         #endif
     }
+    
+    func fetchLeaderboardEntriesInternal(leaderboardIDs: [String], range: NSRange) {
+        GD.printDebug("Fetching leaderboard entries")
+        
+        GKLeaderboard.loadLeaderboards(IDs: leaderboardIDs, completionHandler: {
+            leaderboards, error in
+            if let error {
+                let localizedDescription = error.localizedDescription
+                let errorDetails = localizedDescription.isEmpty ? "" :
+                    ": \(localizedDescription)"
+                DispatchQueue.main.async {
+                    self.fetchLeaderboardEntriesFail.emit(
+                        (error as NSError).code,
+                        "Error fetching leaderboard entries\(errorDetails)")
+                }
+            } else {
+                if let leaderboards {
+                    for leaderboard in leaderboards {
+                        leaderboard.loadEntries(for: .global, timeScope: .allTime,
+                        range: range, completionHandler: {
+                           playerEntry, entries, size, error  in
+                            if let error {
+                                let localizedDescription = error.localizedDescription
+                                let errorDetails = localizedDescription.isEmpty ? "" :
+                                    ": \(localizedDescription)"
+                                DispatchQueue.main.async {
+                                    self.fetchLeaderboardEntriesFail.emit(
+                                        (error as NSError).code,
+                                        "Error fetching leaderboard entries\(errorDetails)")
+                                }
+                            } else {
+                                var entryCollectiion = ObjectCollection<GameCenterLeaderboardEntry>()
+                                if let entries {
+                                    for entry in entries {
+                                        entryCollectiion.append(GameCenterLeaderboardEntry(entry))
+                                    }
+                                }
+                                var leaderboardDictionary = GDictionary()
+                                leaderboardDictionary[Variant(leaderboard.baseLeaderboardID)] =
+                                    Variant(entryCollectiion)
+                                self.fetchLeaderboardEntriesSuccess.emit(leaderboardDictionary)
+                           }
+                        })
+                    }
+                } else {
+                    self.fetchLeaderboardEntriesFail.emit(
+                            GameCenterError.unknownError.rawValue, "No leaderbaords loaded")
+                }
+            }
+        })
+    }
 }

@@ -1,0 +1,22 @@
+//
+//  GameCenter+AccessPoint.swift
+//  GameCenter
+//
+//  Created by SputnikFive on 8/29/25.
+//
+
+import GameKit
+import SwiftGodot
+
+extension GameCenter {
+    
+    func showOrHideAccessPointInternal(
+        visible: Bool, location: Int
+    ) {
+        GKAccessPoint.shared.isActive = visible
+        if let location = GKAccessPoint.Location(rawValue: location) {
+            GKAccessPoint.shared.location = location
+        }
+    }
+    
+}

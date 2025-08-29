@@ -20,7 +20,8 @@ import SwiftGodot
         GameCenterAchievementDescription.self,
         GameCenterPlayer.self,
         GameCenterPlayerLocal.self,
-        GameCenterSavedGameMetadata.self
+        GameCenterSavedGameMetadata.self,
+        GameCenterLeaderboardEntry.self
     ]
 )
 
@@ -88,7 +89,14 @@ class GameCenter: Object {
     /// @Signal
     /// Error showing the leaderboard
     @Signal var leaderboardFail: SignalWithArguments<Int, String>
-    
+    /// @Signal
+    /// Returns the leaderboard entries on a successful fetch
+    @Signal var fetchLeaderboardEntriesSuccess:
+        SignalWithArguments<GDictionary>
+    /// @Signal
+    /// Error fetching the leaderboard entries list
+    @Signal var fetchLeaderboardEntriesFail: SignalWithArguments<Int, String>
+
     // MARK: - Save & load game signals
     /// @Signal
     /// Returns the saved game metadata list on a successful fetch
@@ -174,6 +182,24 @@ class GameCenter: Object {
         return isAuthenticatedInternal()
     }
 
+    // MARK: - Access Point functions
+    /// Show or hide the GKAccessPoint, and optionally provide its location on the screen.
+    ///
+    /// - Parameters:
+    ///     - visible: true to show, flase to hide
+    ///     - location: the screen location for the access point:
+    ///         - topLeading = 0
+    ///         - topTrailing = 1
+    ///         - bottomLeading = 2
+    ///         - bottomTrailing = 3
+    ///         - the location is not set if a value outside 0-3 is passed, or no value
+    @Callable
+    func showOrHideAccessPoint(
+        visible: Bool, location: Int = -1
+    ) {
+        showOrHideAccessPointInternal(visible: visible, location: location)
+    }
+   
     // MARK: - Achievement functions
     /// @Callable
     ///
@@ -299,6 +325,24 @@ class GameCenter: Object {
     @Callable
     func showLeaderboard(leaderboardID: String) {
         showLeaderboardInternal(leaderboardID: leaderboardID)
+    }
+    
+    /// Fetch the leaderboard entries for the passed leaderboards and range.
+    ///
+    /// - Parameters:
+    ///     - leaderboardIDs: array of identifiers for the leaderboards in App Store Connect
+    ///     - firstEntryNumber: the first entry number to fetch
+    ///     - totalEntries: the number of entries to fetch
+    ///
+    /// - Signals:
+    ///     - fetchLeaderboardEntriesSuccess: A dictionary with the leaderboardID as the key, and list of enties as the value.
+    ///       Will return a separate dictionary in a separate signal for each leaderboardID.
+    ///     - fetchLeaderboardEntriesFail: An error message is associated with the signal.
+    ///       Will return a separate error in a separate signal for each leaderboardID.
+    @Callable
+    func fetchLeaderboardEntries(leaderboardIDs: [String], firstEntryNumber: Int, totalEntries: Int) {
+        let range = NSRange(location: firstEntryNumber, length: totalEntries)
+        fetchLeaderboardEntriesInternal(leaderboardIDs: leaderboardIDs, range: range)
     }
     
     // MARK: - Save & load game functions
