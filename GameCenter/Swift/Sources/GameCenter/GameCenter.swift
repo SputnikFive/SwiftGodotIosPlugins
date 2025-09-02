@@ -335,10 +335,11 @@ class GameCenter: Object {
     ///     - totalEntries: the number of entries to fetch
     ///
     /// - Signals:
-    ///     - fetchLeaderboardEntriesSuccess: A dictionary with the leaderboardID as the key, and list of enties as the value.
+    ///     - fetchLeaderboardEntriesSuccess: A dictionary with the leaderboardID as the key,
+    ///       and list of enties as the value.
     ///       Will return a separate dictionary in a separate signal for each leaderboardID.
-    ///       The player's rank, 0 or -1 if they don't have one, will be in another dictionary entry,
-    ///       with the key leaderboardID + "-PlayersRank".
+    ///       The player's entry will be in another dictionary entry,
+    ///       with the key leaderboardID + "-PlayersEntry".
     ///     - fetchLeaderboardEntriesFail: An error message is associated with the signal.
     ///       Will return a separate error in a separate signal for each leaderboardID.
     @Callable

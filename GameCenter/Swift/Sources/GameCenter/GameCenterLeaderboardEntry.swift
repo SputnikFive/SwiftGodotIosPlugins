@@ -12,6 +12,9 @@ import SwiftGodot
 class GameCenterLeaderboardEntry: Object {
     // MARK: - Export
     /// @Export
+    /// The player's rank.
+    @Export var rank: Int = 0
+    /// @Export
     /// The name of the player.
     @Export var displayName: String = ""
     /// @Export
@@ -20,6 +23,7 @@ class GameCenterLeaderboardEntry: Object {
     
     convenience init(_ leaderboardEntry: GKLeaderboard.Entry) {
         self.init()
+        self.rank = leaderboardEntry.rank
         self.displayName = leaderboardEntry.player.displayName
         self.score = leaderboardEntry.score
     }

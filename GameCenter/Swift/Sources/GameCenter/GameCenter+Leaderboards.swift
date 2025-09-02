@@ -117,9 +117,11 @@ extension GameCenter {
                                 var leaderboardDictionary = GDictionary()
                                 leaderboardDictionary[Variant(leaderboard.baseLeaderboardID)] =
                                     Variant(entryCollectiion)
-                                let rank = playerEntry?.rank ?? -1
-                                leaderboardDictionary[Variant(
-                                    leaderboard.baseLeaderboardID + "-PlayersRank")] = Variant(rank)
+                                if let playerEntry {
+                                    leaderboardDictionary[Variant(
+                                        leaderboard.baseLeaderboardID + "-PlayersEntry")] =
+                                        Variant(GameCenterLeaderboardEntry(playerEntry))
+                                }
                                 self.fetchLeaderboardEntriesSuccess.emit(leaderboardDictionary)
                            }
                         })
