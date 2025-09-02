@@ -109,13 +109,17 @@ extension GameCenter {
                             } else {
                                 var entryCollectiion = ObjectCollection<GameCenterLeaderboardEntry>()
                                 if let entries {
-                                    for entry in entries {
+                                    let sortedEntries = entries.sorted {$0.rank < $1.rank}
+                                    for entry in sortedEntries {
                                         entryCollectiion.append(GameCenterLeaderboardEntry(entry))
                                     }
                                 }
                                 var leaderboardDictionary = GDictionary()
                                 leaderboardDictionary[Variant(leaderboard.baseLeaderboardID)] =
                                     Variant(entryCollectiion)
+                                let rank = playerEntry?.rank ?? -1
+                                leaderboardDictionary[Variant(
+                                    leaderboard.baseLeaderboardID + "-PlayersRank")] = Variant(rank)
                                 self.fetchLeaderboardEntriesSuccess.emit(leaderboardDictionary)
                            }
                         })
