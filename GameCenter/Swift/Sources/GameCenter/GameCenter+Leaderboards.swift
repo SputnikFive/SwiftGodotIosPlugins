@@ -115,6 +115,9 @@ extension GameCenter {
                                     }
                                 }
                                 var leaderboardDictionary = GDictionary()
+                                leaderboardDictionary[Variant(
+                                    leaderboard.baseLeaderboardID + "-Info")] =
+                                    Variant(GameCenterLeaderboardInfo(leaderboard))
                                 leaderboardDictionary[Variant(leaderboard.baseLeaderboardID)] =
                                     Variant(entryCollectiion)
                                 if let playerEntry {

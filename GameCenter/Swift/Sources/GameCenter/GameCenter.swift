@@ -21,7 +21,8 @@ import SwiftGodot
         GameCenterPlayer.self,
         GameCenterPlayerLocal.self,
         GameCenterSavedGameMetadata.self,
-        GameCenterLeaderboardEntry.self
+        GameCenterLeaderboardEntry.self,
+        GameCenterLeaderboardInfo.self
     ]
 )
 
@@ -101,7 +102,7 @@ class GameCenter: Object {
     /// Error showing the leaderboard
     @Signal var leaderboardFail: SignalWithArguments<Int, String>
     /// @Signal
-    /// Returns the leaderboard entries on a successful fetch
+    /// Returns the leaderboard info, entries, and player entry on a successful fetch
     @Signal var fetchLeaderboardEntriesSuccess:
         SignalWithArguments<GDictionary>
     /// @Signal
@@ -358,6 +359,8 @@ class GameCenter: Object {
     ///       Will return a separate dictionary in a separate signal for each leaderboardID.
     ///       The player's entry will be in another dictionary entry,
     ///       with the key leaderboardID + "-PlayersEntry".
+    ///       The leaderboard info will be in another dictionary entry,
+    ///       with the key leaderboardID + "-Info".
     ///     - fetchLeaderboardEntriesFail: An error message is associated with the signal.
     ///       Will return a separate error in a separate signal for each leaderboardID.
     @Callable
