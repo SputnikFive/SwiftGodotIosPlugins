@@ -45,6 +45,17 @@ class GameCenter: Object {
     /// Error suring the signing process
     @Signal var signinFail: SignalWithArguments<Int, String>
 
+    // MARK: - Access Point signals
+    /// @Signal
+    /// Game Center had been displayed
+    @Signal var gameCenterShowSuccess: SimpleSignal
+    /// @Signal
+    /// Game Center had been dismissed
+    @Signal var gameCenterDismissSuccess: SimpleSignal
+    /// @Signal
+    /// Error showing Game Center
+    @Signal var gameCenterShowFail: SignalWithArguments<Int, String>
+    
     // MARK: - Achievement signals
     /// @Signal
     /// Achievement(s) have been successfully reported
@@ -183,6 +194,13 @@ class GameCenter: Object {
     }
 
     // MARK: - Access Point functions
+    /// Show Game Center.
+    ///
+    @Callable
+    func showGameCenter() {
+        showGameCenterInternal()
+    }
+   
     /// Show or hide the GKAccessPoint, and optionally provide its location on the screen.
     ///
     /// - Parameters:
