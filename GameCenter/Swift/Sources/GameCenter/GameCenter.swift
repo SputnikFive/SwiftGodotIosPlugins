@@ -352,7 +352,7 @@ class GameCenter: Object {
     ///     - leaderboardIDs: array of identifiers for the leaderboards in App Store Connect
     ///     - firstEntryNumber: the first entry number to fetch
     ///     - totalEntries: the number of entries to fetch
-    ///     - includePreviousLeaderboardInfo: true (default)  to return the previous
+    ///     - includePreviousLeaderboardInfo: true to return the previous
     ///     leaderboard info, and the player's previous entry
     ///
     /// - Signals:
@@ -371,7 +371,7 @@ class GameCenter: Object {
     ///       Will return a separate error in a separate signal for each leaderboardID.
     @Callable
     func fetchLeaderboardEntries(leaderboardIDs: [String], firstEntryNumber: Int,
-        totalEntries: Int, includePreviousLeaderboardInfo: Bool = true) {
+        totalEntries: Int, includePreviousLeaderboardInfo: Bool) {
         
         let range = NSRange(location: firstEntryNumber, length: totalEntries)
         Task.detached {
