@@ -77,7 +77,9 @@ extension GameCenter {
         #endif
     }
 
-    func fetchLeaderboardEntriesInternal(leaderboardIDs: [String], range: NSRange) async {
+    func fetchLeaderboardEntriesInternal(leaderboardIDs: [String], range: NSRange,
+        includePreviousLeaderboardInfo: Bool) async {
+        
         GD.printDebug("Fetching leaderboard entries")
         
         do {
@@ -104,22 +106,24 @@ extension GameCenter {
                         Variant(GameCenterLeaderboardEntry(playerEntry))
                 }
                 
-                // Add the previous leaderboard info, and the player's previous entry,
-                // if they exist.
-                let prevousLeaderboard = try await leaderboard.loadPreviousOccurrence()
-                if let prevousLeaderboard,
-                   let prevStartDate = prevousLeaderboard.startDate,
-                   let startDate = leaderboard.startDate,
-                   prevStartDate < startDate {
-                    leaderboardDictionary[Variant(
-                        leaderboard.baseLeaderboardID + "-PreviousInfo")] =
-                        Variant(GameCenterLeaderboardInfo(prevousLeaderboard))
-                    let (prevousEntry, _) = try await prevousLeaderboard.loadEntries(
-                        for: [], timeScope: .allTime)
-                    if let prevousEntry {
+                if includePreviousLeaderboardInfo {
+                    // Add the previous leaderboard info, and the player's previous entry,
+                    // if they exist.
+                    let prevousLeaderboard = try await leaderboard.loadPreviousOccurrence()
+                    if let prevousLeaderboard,
+                       let prevStartDate = prevousLeaderboard.startDate,
+                       let startDate = leaderboard.startDate,
+                       prevStartDate < startDate {
                         leaderboardDictionary[Variant(
-                            leaderboard.baseLeaderboardID + "-PlayersPreviousEntry")] =
+                            leaderboard.baseLeaderboardID + "-PreviousInfo")] =
+                        Variant(GameCenterLeaderboardInfo(prevousLeaderboard))
+                        let (prevousEntry, _) = try await prevousLeaderboard.loadEntries(
+                            for: [], timeScope: .allTime)
+                        if let prevousEntry {
+                            leaderboardDictionary[Variant(
+                                leaderboard.baseLeaderboardID + "-PlayersPreviousEntry")] =
                             Variant(GameCenterLeaderboardEntry(prevousEntry))
+                        }
                     }
                 }
                 
