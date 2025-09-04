@@ -104,12 +104,16 @@ extension GameCenter {
                         Variant(GameCenterLeaderboardEntry(playerEntry))
                 }
                 
-                // Add the player's previous entry, if there is one.
+                // Add the previous leaderboard info, and the player's previous entry,
+                // if they exist.
                 let prevousLeaderboard = try await leaderboard.loadPreviousOccurrence()
                 if let prevousLeaderboard,
                    let prevStartDate = prevousLeaderboard.startDate,
                    let startDate = leaderboard.startDate,
                    prevStartDate < startDate {
+                    leaderboardDictionary[Variant(
+                        leaderboard.baseLeaderboardID + "-PreviousInfo")] =
+                        Variant(GameCenterLeaderboardInfo(prevousLeaderboard))
                     let (prevousEntry, _) = try await prevousLeaderboard.loadEntries(
                         for: [], timeScope: .allTime)
                     if let prevousEntry {
@@ -119,7 +123,9 @@ extension GameCenter {
                     }
                 }
                 
-                self.fetchLeaderboardEntriesSuccess.emit(leaderboardDictionary)
+                DispatchQueue.main.async {
+                    self.fetchLeaderboardEntriesSuccess.emit(leaderboardDictionary)
+                }
             }
         } catch {
             let localizedDescription = error.localizedDescription

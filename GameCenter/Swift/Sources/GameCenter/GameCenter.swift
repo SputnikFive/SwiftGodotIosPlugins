@@ -363,6 +363,8 @@ class GameCenter: Object {
     ///       with the key leaderboardID + "-PlayersPreviousEntry".
     ///       The leaderboard info will be in another dictionary entry,
     ///       with the key leaderboardID + "-Info".
+    ///       The previous leaderboard info (if found) will be in another dictionary entry,
+    ///       with the key leaderboardID + "-PreviousInfo".
     ///     - fetchLeaderboardEntriesFail: An error message is associated with the signal.
     ///       Will return a separate error in a separate signal for each leaderboardID.
     @Callable
