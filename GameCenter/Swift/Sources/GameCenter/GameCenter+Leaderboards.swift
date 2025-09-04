@@ -76,64 +76,60 @@ extension GameCenter {
                 "Leaderboard not available")
         #endif
     }
-    
-    func fetchLeaderboardEntriesInternal(leaderboardIDs: [String], range: NSRange) {
+
+    func fetchLeaderboardEntriesInternal(leaderboardIDs: [String], range: NSRange) async {
         GD.printDebug("Fetching leaderboard entries")
         
-        GKLeaderboard.loadLeaderboards(IDs: leaderboardIDs, completionHandler: {
-            leaderboards, error in
-            if let error {
-                let localizedDescription = error.localizedDescription
-                let errorDetails = localizedDescription.isEmpty ? "" :
-                    ": \(localizedDescription)"
-                DispatchQueue.main.async {
-                    self.fetchLeaderboardEntriesFail.emit(
-                        (error as NSError).code,
-                        "Error fetching leaderboard entries\(errorDetails)")
+        do {
+            let leaderboards = try await GKLeaderboard.loadLeaderboards(IDs: leaderboardIDs)
+            for leaderboard in leaderboards {
+                
+                // Get the current entries.
+                let (playerEntry, entries, size) = try await leaderboard.loadEntries(
+                    for: .global, timeScope: .allTime, range: range)
+                var entryCollectiion = ObjectCollection<GameCenterLeaderboardEntry>()
+                let sortedEntries = entries.sorted {$0.rank < $1.rank}
+                for entry in sortedEntries {
+                    entryCollectiion.append(GameCenterLeaderboardEntry(entry))
                 }
-            } else {
-                if let leaderboards {
-                    for leaderboard in leaderboards {
-                        leaderboard.loadEntries(for: .global, timeScope: .allTime,
-                        range: range, completionHandler: {
-                           playerEntry, entries, size, error  in
-                            if let error {
-                                let localizedDescription = error.localizedDescription
-                                let errorDetails = localizedDescription.isEmpty ? "" :
-                                    ": \(localizedDescription)"
-                                DispatchQueue.main.async {
-                                    self.fetchLeaderboardEntriesFail.emit(
-                                        (error as NSError).code,
-                                        "Error fetching leaderboard entries\(errorDetails)")
-                                }
-                            } else {
-                                var entryCollectiion = ObjectCollection<GameCenterLeaderboardEntry>()
-                                if let entries {
-                                    let sortedEntries = entries.sorted {$0.rank < $1.rank}
-                                    for entry in sortedEntries {
-                                        entryCollectiion.append(GameCenterLeaderboardEntry(entry))
-                                    }
-                                }
-                                var leaderboardDictionary = GDictionary()
-                                leaderboardDictionary[Variant(
-                                    leaderboard.baseLeaderboardID + "-Info")] =
-                                    Variant(GameCenterLeaderboardInfo(leaderboard))
-                                leaderboardDictionary[Variant(leaderboard.baseLeaderboardID)] =
-                                    Variant(entryCollectiion)
-                                if let playerEntry {
-                                    leaderboardDictionary[Variant(
-                                        leaderboard.baseLeaderboardID + "-PlayersEntry")] =
-                                        Variant(GameCenterLeaderboardEntry(playerEntry))
-                                }
-                                self.fetchLeaderboardEntriesSuccess.emit(leaderboardDictionary)
-                           }
-                        })
+                var leaderboardDictionary = GDictionary()
+                leaderboardDictionary[Variant(
+                    leaderboard.baseLeaderboardID + "-Info")] =
+                    Variant(GameCenterLeaderboardInfo(leaderboard))
+                leaderboardDictionary[Variant(leaderboard.baseLeaderboardID)] =
+                    Variant(entryCollectiion)
+                if let playerEntry {
+                    leaderboardDictionary[Variant(
+                        leaderboard.baseLeaderboardID + "-PlayersEntry")] =
+                        Variant(GameCenterLeaderboardEntry(playerEntry))
+                }
+                
+                // Add the player's previous entry, if there is one.
+                let prevousLeaderboard = try await leaderboard.loadPreviousOccurrence()
+                if let prevousLeaderboard,
+                   let prevStartDate = prevousLeaderboard.startDate,
+                   let startDate = leaderboard.startDate,
+                   prevStartDate < startDate {
+                    let (prevousEntry, _) = try await prevousLeaderboard.loadEntries(
+                        for: [], timeScope: .allTime)
+                    if let prevousEntry {
+                        leaderboardDictionary[Variant(
+                            leaderboard.baseLeaderboardID + "-PlayersPreviousEntry")] =
+                            Variant(GameCenterLeaderboardEntry(prevousEntry))
                     }
-                } else {
-                    self.fetchLeaderboardEntriesFail.emit(
-                            GameCenterError.unknownError.rawValue, "No leaderbaords loaded")
                 }
+                
+                self.fetchLeaderboardEntriesSuccess.emit(leaderboardDictionary)
             }
-        })
+        } catch {
+            let localizedDescription = error.localizedDescription
+            let errorDetails = localizedDescription.isEmpty ? "" :
+                ": \(localizedDescription)"
+            DispatchQueue.main.async {
+                self.fetchLeaderboardEntriesFail.emit(
+                    (error as NSError).code,
+                    "Error fetching leaderboard entries\(errorDetails)")
+            }
+        }
     }
 }

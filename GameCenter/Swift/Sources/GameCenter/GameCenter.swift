@@ -359,6 +359,8 @@ class GameCenter: Object {
     ///       Will return a separate dictionary in a separate signal for each leaderboardID.
     ///       The player's entry will be in another dictionary entry,
     ///       with the key leaderboardID + "-PlayersEntry".
+    ///       The player's previous entry (if there is one) will be in another dictionary entry,
+    ///       with the key leaderboardID + "-PlayersPreviousEntry".
     ///       The leaderboard info will be in another dictionary entry,
     ///       with the key leaderboardID + "-Info".
     ///     - fetchLeaderboardEntriesFail: An error message is associated with the signal.
@@ -366,7 +368,9 @@ class GameCenter: Object {
     @Callable
     func fetchLeaderboardEntries(leaderboardIDs: [String], firstEntryNumber: Int, totalEntries: Int) {
         let range = NSRange(location: firstEntryNumber, length: totalEntries)
-        fetchLeaderboardEntriesInternal(leaderboardIDs: leaderboardIDs, range: range)
+        Task.detached {
+            await self.fetchLeaderboardEntriesInternal(leaderboardIDs: leaderboardIDs, range: range)
+        }
     }
     
     // MARK: - Save & load game functions
